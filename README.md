@@ -80,7 +80,7 @@ python arm_cli.py --info --arm 1
 
 **Connect with custom IP addresses:**
 ```bash
-python arm_cli.py --arm1-ip 192.168.1.20 --arm2-ip 192.168.1.21 --read
+python arm_cli.py --arm1-ip 169.254.128.20 --arm2-ip 169.254.128.21 --read
 ```
 
 **Connect with custom ports:**
@@ -92,9 +92,9 @@ python arm_cli.py --arm1-port 8080 --arm2-port 8081 --read
 
 ```
 Connection Options:
-  --arm1-ip IP          IP address of arm 1 (default: 192.168.1.18)
+  --arm1-ip IP          IP address of arm 1 (default: 169.254.128.18)
   --arm1-port PORT      Port of arm 1 (default: 8080)
-  --arm2-ip IP          IP address of arm 2 (default: 192.168.1.19)
+  --arm2-ip IP          IP address of arm 2 (default: 169.254.128.19)
   --arm2-port PORT      Port of arm 2 (default: 8080)
 
 Commands:
@@ -118,9 +118,9 @@ python arm_cli.py --read
 
 Output:
 ```
-Connecting to Arm 1 at 192.168.1.18:8080...
+Connecting to Arm 1 at 169.254.128.18:8080...
 ✓ Connected to Arm 1 (ID: 1)
-Connecting to Arm 2 at 192.168.1.19:8080...
+Connecting to Arm 2 at 169.254.128.19:8080...
 ✓ Connected to Arm 2 (ID: 2)
 
 === Arm 1 Joint States ===
@@ -155,7 +155,7 @@ python arm_cli.py --info
 ### Example 5: Record arm data at 30 FPS
 ```bash
 # Using Docker on macOS
-./run_docker.sh python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+./run_docker.sh python record_arm_data.py --arm1-ip 169.254.128.18 --fps 30
 
 # Press Enter to stop recording
 # Output: arm_recording_YYYYMMDD_HHMMSS.json
@@ -183,6 +183,6 @@ The CLI wraps the Realman Python SDK. For more details, see:
 - Joint angles can be specified in either radians (default) or degrees (with `--degrees` flag)
 - The `--arm` parameter is required when using `--set` to specify which arm to control
 - When using `--read` without `--arm`, both arms' states will be displayed
-- Default IP addresses are 192.168.1.18 (arm 1) and 192.168.1.19 (arm 2)
+- Default IP addresses are 169.254.128.18 (arm 1) and 169.254.128.19 (arm 2)
 - Make sure both arms are powered on and connected to the network before running commands
 

@@ -43,7 +43,7 @@
 ---------------------------------------
 
 # Record from arm 1 at 30 FPS
-./run_docker.sh python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+./run_docker.sh python record_arm_data.py --arm1-ip 169.254.128.18 --fps 30
 
 # Press Enter when done
 # Output: arm_recording_YYYYMMDD_HHMMSS.json
@@ -52,7 +52,7 @@
 🎯 RECORD DATA (Linux/Windows native):
 ---------------------------------------
 
-python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+python record_arm_data.py --arm1-ip 169.254.128.18 --fps 30
 
 
 🎯 ANALYZE RECORDED DATA:
@@ -103,22 +103,22 @@ For each frame at the specified FPS:
 ================================================================================
 
 1️⃣  BASIC RECORDING (one arm, 30 FPS):
-   ./run_docker.sh python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+   ./run_docker.sh python record_arm_data.py --arm1-ip 169.254.128.18 --fps 30
 
 2️⃣  DUAL ARM RECORDING (both arms, 60 FPS):
    ./run_docker.sh python record_arm_data.py \
-     --arm1-ip 192.168.1.18 \
-     --arm2-ip 192.168.1.19 \
+     --arm1-ip 169.254.128.18 \
+     --arm2-ip 169.254.128.19 \
      --fps 60
 
 3️⃣  HIGH SPEED RECORDING (100 FPS):
    ./run_docker.sh python record_arm_data.py \
-     --arm1-ip 192.168.1.18 \
+     --arm1-ip 169.254.128.18 \
      --fps 100
 
 4️⃣  CUSTOM OUTPUT FILE:
    ./run_docker.sh python record_arm_data.py \
-     --arm1-ip 192.168.1.18 \
+     --arm1-ip 169.254.128.18 \
      --output my_demo.json
 
 5️⃣  VIEW RECORDING DETAILS:

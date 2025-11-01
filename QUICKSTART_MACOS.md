@@ -22,14 +22,14 @@ This takes a few minutes the first time. Subsequent builds are faster.
 Replace the IP addresses with your actual arm IPs:
 
 ```bash
-./run_docker.sh --arm1-ip 192.168.1.18 --arm2-ip 192.168.1.19 --read
+./run_docker.sh --arm1-ip 169.254.128.18 --arm2-ip 169.254.128.19 --read
 ```
 
 Expected output:
 ```
-Connecting to Arm 1 at 192.168.1.18:8080...
+Connecting to Arm 1 at 169.254.128.18:8080...
 ✓ Connected to Arm 1 (ID: 1)
-Connecting to Arm 2 at 192.168.1.19:8080...
+Connecting to Arm 2 at 169.254.128.19:8080...
 ✓ Connected to Arm 2 (ID: 2)
 
 === Arm 1 Joint States ===
@@ -61,7 +61,7 @@ Connecting to Arm 2 at 192.168.1.19:8080...
 
 ### Run the version check script:
 ```bash
-docker-compose run --rm arm-controller python arm_version.py --ip 192.168.1.18
+docker-compose run --rm arm-controller python arm_version.py --ip 169.254.128.18
 ```
 
 ## Troubleshooting
@@ -72,7 +72,7 @@ docker-compose run --rm arm-controller python arm_version.py --ip 192.168.1.18
 
 ### "Connection refused" or timeout errors
 - Verify the arm IP addresses are correct
-- Ping the arms: `ping 192.168.1.18`
+- Ping the arms: `ping 169.254.128.18`
 - Make sure you're on the same network as the arms
 - Check if any firewall is blocking the connection
 

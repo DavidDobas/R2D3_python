@@ -10,8 +10,8 @@ from Robotic_Arm.rm_robot_interface import *
 
 
 class DualArmController:
-    def __init__(self, arm1_ip="192.168.1.18", arm1_port=8080, 
-                 arm2_ip="192.168.1.19", arm2_port=8080):
+    def __init__(self, arm1_ip="169.254.128.18", arm1_port=8080, 
+                 arm2_ip="169.254.128.19", arm2_port=8080):
         """Initialize connection to two robotic arms."""
         self.robot = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)
         self.arm1_ip = arm1_ip
@@ -144,12 +144,12 @@ Examples:
     )
     
     # Connection arguments
-    parser.add_argument("--arm1-ip", type=str, default="192.168.1.18",
-                        help="IP address of arm 1 (default: 192.168.1.18)")
+    parser.add_argument("--arm1-ip", type=str, default="169.254.128.18",
+                        help="IP address of arm 1 (default: 169.254.128.18)")
     parser.add_argument("--arm1-port", type=int, default=8080,
                         help="Port of arm 1 (default: 8080)")
-    parser.add_argument("--arm2-ip", type=str, default="192.168.1.19",
-                        help="IP address of arm 2 (default: 192.168.1.19)")
+    parser.add_argument("--arm2-ip", type=str, default="169.254.128.19",
+                        help="IP address of arm 2 (default: 169.254.128.19)")
     parser.add_argument("--arm2-port", type=int, default=8080,
                         help="Port of arm 2 (default: 8080)")
     

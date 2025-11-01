@@ -11,9 +11,9 @@ import time
 def main():
     # Initialize recorder
     recorder = ArmDataRecorder(
-        arm1_ip="192.168.1.18",
+        arm1_ip="169.254.128.18",
         arm1_port=8080,
-        arm2_ip="192.168.1.19",  # Optional: set to None if only using one arm
+        arm2_ip="169.254.128.19",  # Optional: set to None if only using one arm
         arm2_port=8080,
         fps=30
     )

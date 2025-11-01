@@ -149,7 +149,7 @@ def robot_motion_1():
         None
     """
     # Connect to robot 1
-    robot1 = connect_robot("192.168.1.18", 8080, 3, 2)
+    robot1 = connect_robot("169.254.128.18", 8080, 3, 2)
 
     # Perform movej motion with default parameters
     demo_movej(robot1)
@@ -178,7 +178,7 @@ def robot_motion_2():
         None
     """
     # Connect to robot 2
-    robot2 = connect_robot("192.168.1.19", 8080, 3)
+    robot2 = connect_robot("169.254.128.19", 8080, 3)
 
     # Perform movej motion with default parameters
     demo_movej(robot2)

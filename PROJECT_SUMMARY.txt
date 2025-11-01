@@ -38,7 +38,7 @@ Reason: The library only includes binaries for Linux and Windows.
 docker-compose build
 
 # Test connection (replace IPs with your actual arm IPs)
-./run_docker.sh --arm1-ip 192.168.1.18 --arm2-ip 192.168.1.19 --read
+./run_docker.sh --arm1-ip 169.254.128.18 --arm2-ip 169.254.128.19 --read
 
 # Read joint states from both arms
 ./run_docker.sh --read
@@ -77,8 +77,8 @@ docker-compose build
 from arm_cli import DualArmController
 
 controller = DualArmController(
-    arm1_ip="192.168.1.18",
-    arm2_ip="192.168.1.19"
+    arm1_ip="169.254.128.18",
+    arm2_ip="169.254.128.19"
 )
 controller.connect()
 controller.read_joint_states()
@@ -91,7 +91,7 @@ controller.set_joint_states([0, 0.5, -0.5, 0, 1.57, 0, 0], arm_num=1)
 
 2. "Connection refused"
    -> Check arm IP addresses and network connectivity
-   -> Ping the arms: ping 192.168.1.18
+   -> Ping the arms: ping 169.254.128.18
 
 3. Slow performance on macOS
    -> This is normal with Docker. Consider Linux for production.

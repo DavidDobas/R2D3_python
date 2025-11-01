@@ -46,7 +46,7 @@ docker-compose run --rm arm-controller bash
 
 # Then inside container:
 python arm_cli.py --read
-python arm_version.py --ip 192.168.1.18
+python arm_version.py --ip 169.254.128.18
 ```
 
 ### Option 2: Remote Linux Machine
@@ -119,7 +119,7 @@ Once you have Docker set up, test the connection:
 
 ```bash
 # Test with your actual arm IPs
-./run_docker.sh --arm1-ip 192.168.1.18 --arm2-ip 192.168.1.19 --read
+./run_docker.sh --arm1-ip 169.254.128.18 --arm2-ip 169.254.128.19 --read
 ```
 
 If you see connection messages and joint states, you're good to go! 🎉

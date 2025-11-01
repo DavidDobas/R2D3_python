@@ -251,16 +251,16 @@ def main():
         epilog="""
 Examples:
   # Record from arm 1 at 30 FPS
-  python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+  python record_arm_data.py --arm1-ip 169.254.128.18 --fps 30
   
   # Record from both arms at 60 FPS
-  python record_arm_data.py --arm1-ip 192.168.1.18 --arm2-ip 192.168.1.19 --fps 60
+  python record_arm_data.py --arm1-ip 169.254.128.18 --arm2-ip 169.254.128.19 --fps 60
   
   # Record with custom output file
-  python record_arm_data.py --arm1-ip 192.168.1.18 --output my_recording.json
+  python record_arm_data.py --arm1-ip 169.254.128.18 --output my_recording.json
   
   # Record from arm 2 only
-  python record_arm_data.py --arm2-ip 192.168.1.19 --fps 10
+  python record_arm_data.py --arm2-ip 169.254.128.19 --fps 10
 
 The script records:
   - Joint states (angles in degrees and radians)

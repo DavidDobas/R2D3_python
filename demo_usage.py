@@ -10,9 +10,9 @@ import time
 def main():
     # Initialize controller with custom IPs if needed
     controller = DualArmController(
-        arm1_ip="192.168.1.18",
+        arm1_ip="169.254.128.18",
         arm1_port=8080,
-        arm2_ip="192.168.1.19",
+        arm2_ip="169.254.128.19",
         arm2_port=8080
     )
     

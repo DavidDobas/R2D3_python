@@ -7,10 +7,10 @@ This guide explains how to record and analyze data from your Realman robotic arm
 ### Record from one arm at 30 FPS:
 ```bash
 # On macOS (using Docker)
-./run_docker.sh python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+./run_docker.sh python record_arm_data.py --arm1-ip 169.254.128.18 --fps 30
 
 # On Linux (native)
-python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+python record_arm_data.py --arm1-ip 169.254.128.18 --fps 30
 ```
 
 **Press Enter to stop recording and save the data.**
@@ -44,29 +44,29 @@ For each frame, the script captures:
 
 ```bash
 # Record from arm 1
-python record_arm_data.py --arm1-ip 192.168.1.18
+python record_arm_data.py --arm1-ip 169.254.128.18
 
 # Record from arm 2
-python record_arm_data.py --arm2-ip 192.168.1.19
+python record_arm_data.py --arm2-ip 169.254.128.19
 
 # Record from both arms simultaneously
-python record_arm_data.py --arm1-ip 192.168.1.18 --arm2-ip 192.168.1.19
+python record_arm_data.py --arm1-ip 169.254.128.18 --arm2-ip 169.254.128.19
 ```
 
 ### FPS Settings
 
 ```bash
 # Low FPS (10 Hz) - for slow movements
-python record_arm_data.py --arm1-ip 192.168.1.18 --fps 10
+python record_arm_data.py --arm1-ip 169.254.128.18 --fps 10
 
 # Standard FPS (30 Hz) - default
-python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+python record_arm_data.py --arm1-ip 169.254.128.18 --fps 30
 
 # High FPS (60 Hz) - for fast movements
-python record_arm_data.py --arm1-ip 192.168.1.18 --fps 60
+python record_arm_data.py --arm1-ip 169.254.128.18 --fps 60
 
 # Very high FPS (100 Hz) - maximum detail
-python record_arm_data.py --arm1-ip 192.168.1.18 --fps 100
+python record_arm_data.py --arm1-ip 169.254.128.18 --fps 100
 ```
 
 **Note**: Higher FPS creates larger files and may affect timing accuracy. The actual FPS achieved depends on network latency and system performance.
@@ -75,7 +75,7 @@ python record_arm_data.py --arm1-ip 192.168.1.18 --fps 100
 
 ```bash
 # Specify output filename
-python record_arm_data.py --arm1-ip 192.168.1.18 --output my_recording.json
+python record_arm_data.py --arm1-ip 169.254.128.18 --output my_recording.json
 
 # Default: auto-generated filename with timestamp
 # Example: arm_recording_20251101_123045.json
@@ -177,7 +177,7 @@ Since the library doesn't support macOS natively, use Docker:
 
 ### Record data:
 ```bash
-./run_docker.sh python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+./run_docker.sh python record_arm_data.py --arm1-ip 169.254.128.18 --fps 30
 ```
 
 The recorded file will be saved in the current directory and accessible from macOS.
