@@ -1,0 +1,264 @@
+================================================================================
+                    DATA RECORDING SYSTEM - SUMMARY
+================================================================================
+
+✅ NEW FILES CREATED FOR DATA RECORDING:
+-----------------------------------------
+
+1. record_arm_data.py (11 KB)
+   - Main data recording script
+   - Records at specified FPS (10-100 Hz)
+   - Captures: joint states, end effector pose, gripper state
+   - Press Enter to stop and save
+   - Saves as JSON with metadata
+
+2. visualize_recording.py (7.9 KB)
+   - Analyzes recorded data
+   - Shows recording summaries
+   - Inspects specific frames
+   - Exports to CSV format
+
+3. RECORDING_GUIDE.md (7.6 KB)
+   - Complete guide for recording data
+   - Usage examples and tips
+   - Data format explanation
+   - Analysis examples in Python
+
+4. example_record_demo.py (1.6 KB)
+   - Shows how to use recorder as a library
+   - Programmatic usage example
+
+5. Updated Dockerfile
+   - Now includes recording scripts
+
+6. Updated README.md
+   - Added recording features overview
+   - Added recording examples
+
+================================================================================
+                        QUICK START GUIDE
+================================================================================
+
+🎯 RECORD DATA (with Docker on macOS):
+---------------------------------------
+
+# Record from arm 1 at 30 FPS
+./run_docker.sh python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+
+# Press Enter when done
+# Output: arm_recording_YYYYMMDD_HHMMSS.json
+
+
+🎯 RECORD DATA (Linux/Windows native):
+---------------------------------------
+
+python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+
+
+🎯 ANALYZE RECORDED DATA:
+--------------------------
+
+# View summary (works natively on macOS!)
+python visualize_recording.py arm_recording_20251101_123045.json
+
+# View first and last frames
+python visualize_recording.py recording.json --frame 0 --frame -1
+
+# Export to CSV for analysis
+python visualize_recording.py recording.json --export data.csv
+
+
+================================================================================
+                        WHAT GETS RECORDED
+================================================================================
+
+For each frame at the specified FPS:
+
+📊 JOINT STATES:
+  - All 7 joint angles
+  - Available in both degrees AND radians
+  - Example: [0.0, 30.0, -45.0, 0.0, 90.0, 0.0, 0.0]
+
+📊 END EFFECTOR POSE:
+  Position (meters):
+    - X, Y, Z coordinates
+  
+  Orientation (both formats):
+    - Euler angles (rx, ry, rz) in radians
+    - Quaternion (w, x, y, z)
+
+📊 GRIPPER STATE:
+  - Current position
+  - Status
+  - (If no gripper: gracefully noted)
+
+📊 METADATA:
+  - Start/end timestamps
+  - Target and actual FPS
+  - Total duration
+  - Number of frames
+
+================================================================================
+                        USAGE EXAMPLES
+================================================================================
+
+1️⃣  BASIC RECORDING (one arm, 30 FPS):
+   ./run_docker.sh python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+
+2️⃣  DUAL ARM RECORDING (both arms, 60 FPS):
+   ./run_docker.sh python record_arm_data.py \
+     --arm1-ip 192.168.1.18 \
+     --arm2-ip 192.168.1.19 \
+     --fps 60
+
+3️⃣  HIGH SPEED RECORDING (100 FPS):
+   ./run_docker.sh python record_arm_data.py \
+     --arm1-ip 192.168.1.18 \
+     --fps 100
+
+4️⃣  CUSTOM OUTPUT FILE:
+   ./run_docker.sh python record_arm_data.py \
+     --arm1-ip 192.168.1.18 \
+     --output my_demo.json
+
+5️⃣  VIEW RECORDING DETAILS:
+   python visualize_recording.py my_demo.json
+
+6️⃣  EXPORT FOR ANALYSIS:
+   python visualize_recording.py my_demo.json --export analysis.csv
+
+================================================================================
+                        DATA FORMAT (JSON)
+================================================================================
+
+{
+  "metadata": {
+    "fps": 30,
+    "start_time": "2025-11-01T12:30:45.123456",
+    "end_time": "2025-11-01T12:31:15.987654",
+    "duration": 30.864198,
+    "num_frames": 925
+  },
+  "frames": [
+    {
+      "frame_number": 0,
+      "timestamp": 1730469045.123456,
+      "arm1": {
+        "joint_states": {
+          "angles_deg": [0.0, 30.0, -30.0, 0.0, 90.0, 0.0, 0.0],
+          "angles_rad": [0.0, 0.5236, -0.5236, 0.0, 1.5708, 0.0, 0.0]
+        },
+        "end_effector_pose": {
+          "position": {"x": 0.3, "y": 0.0, "z": 0.4},
+          "orientation_euler": {"rx": 3.141, "ry": 0.0, "rz": 0.0},
+          "orientation_quaternion": {"w": 1.0, "x": 0.0, "y": 0.0, "z": 0.0}
+        },
+        "gripper_state": {...}
+      }
+    },
+    ...
+  ]
+}
+
+================================================================================
+                    FILE SIZE ESTIMATES
+================================================================================
+
+Recording duration: 1 minute
+
+10 FPS,  1 arm:  ~1.5 MB
+30 FPS,  1 arm:  ~4.5 MB
+60 FPS,  1 arm:  ~9 MB
+100 FPS, 1 arm:  ~15 MB
+
+30 FPS,  2 arms: ~9 MB
+60 FPS,  2 arms: ~18 MB
+
+================================================================================
+                    TIPS & BEST PRACTICES
+================================================================================
+
+✓ Choose FPS based on your needs:
+  - 10 Hz:  Slow teleoperation
+  - 30 Hz:  Standard (recommended)
+  - 60 Hz:  Fast movements
+  - 100 Hz: Very fast / research
+
+✓ Use wired ethernet for reliability
+
+✓ Press Enter (not Ctrl+C) to stop cleanly
+
+✓ The visualization script works natively on macOS (no Docker needed!)
+
+✓ CSV export is great for Excel, MATLAB, pandas, etc.
+
+✓ Long recordings use more RAM - consider lower FPS for >10 min
+
+================================================================================
+                    ANALYSIS IN PYTHON
+================================================================================
+
+# Load and plot using pandas
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv('data.csv')
+
+# Plot joint trajectory
+plt.plot(df['timestamp'] - df['timestamp'][0], df['arm1_j1'])
+plt.xlabel('Time (s)')
+plt.ylabel('Joint 1 Angle (deg)')
+plt.show()
+
+# Plot 3D end effector path
+from mpl_toolkits.mplot3d import Axes3D
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.plot(df['arm1_x'], df['arm1_y'], df['arm1_z'])
+plt.show()
+
+================================================================================
+                        DOCUMENTATION
+================================================================================
+
+📖 RECORDING_GUIDE.md     - Complete recording guide with examples
+📖 README.md              - Main project documentation
+📖 QUICKSTART_MACOS.md    - Quick start for macOS users
+📖 MACOS_SETUP.md         - macOS setup details
+
+================================================================================
+                        TROUBLESHOOTING
+================================================================================
+
+❌ "Failed to get arm state"
+   → Check network connection and arm IP
+
+❌ Actual FPS much lower than target
+   → Use wired connection, lower FPS, or check CPU
+
+❌ Large file sizes
+   → Reduce FPS or recording duration
+
+❌ Script hangs
+   → Check arm is responsive (ping it)
+   → Restart arm controller
+
+================================================================================
+                        NEXT STEPS
+================================================================================
+
+1. Install Docker Desktop (if on macOS)
+2. Build container: docker-compose build
+3. Record your first dataset
+4. Analyze with visualize_recording.py
+5. Export to CSV for advanced analysis
+6. Use data for:
+   - Replay movements
+   - Train ML models
+   - Analyze trajectories
+   - Compare coordination
+
+================================================================================
+For more help: See RECORDING_GUIDE.md
+================================================================================
+

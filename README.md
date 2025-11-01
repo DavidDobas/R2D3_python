@@ -1,6 +1,33 @@
 # Realman Dual Arm Controller
 
-A simple CLI tool for controlling two Realman robotic arms simultaneously.
+Control and record data from two Realman robotic arms with easy-to-use CLI tools.
+
+## ⚠️ macOS Users
+
+The Realman library **does not support macOS natively**. 
+
+- **Quick Start**: See [QUICKSTART_MACOS.md](QUICKSTART_MACOS.md) to get running in 5 minutes with Docker
+- **Detailed Setup**: See [MACOS_SETUP.md](MACOS_SETUP.md) for all options and troubleshooting
+
+## Features Overview
+
+### 1. Arm Control (`arm_cli.py`)
+- Connect to dual arms
+- Read current joint states
+- Set new joint positions
+- Get arm information
+
+### 2. Data Recording (`record_arm_data.py`)
+- Record joint states at specified FPS (10-100 Hz)
+- Capture end effector pose (position + orientation)
+- Log gripper state
+- Press Enter to stop and save
+- See [RECORDING_GUIDE.md](RECORDING_GUIDE.md) for details
+
+### 3. Data Analysis (`visualize_recording.py`)
+- View recording summaries
+- Inspect specific frames
+- Export to CSV for further analysis
 
 ## Installation
 
@@ -123,6 +150,27 @@ python arm_cli.py --set 0.0 0.785 -0.785 0.0 1.57 0.0 0.0 --arm 2 --speed 15
 ### Example 4: Get detailed information about both arms
 ```bash
 python arm_cli.py --info
+```
+
+### Example 5: Record arm data at 30 FPS
+```bash
+# Using Docker on macOS
+./run_docker.sh python record_arm_data.py --arm1-ip 192.168.1.18 --fps 30
+
+# Press Enter to stop recording
+# Output: arm_recording_YYYYMMDD_HHMMSS.json
+```
+
+### Example 6: Analyze recorded data
+```bash
+# View summary
+python visualize_recording.py arm_recording_20251101_123045.json
+
+# View specific frames
+python visualize_recording.py recording.json --frame 0 --frame -1
+
+# Export to CSV
+python visualize_recording.py recording.json --export data.csv
 ```
 
 ## API Reference
