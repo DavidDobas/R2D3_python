@@ -10,7 +10,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
+# Copy source code
+COPY src/ ./src/
+
+# Copy legacy scripts
 COPY arm_cli.py .
 COPY arm_version.py .
 COPY demo_usage.py .

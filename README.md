@@ -1,188 +1,171 @@
-# Realman Dual Arm Controller
+# R2D3 Python - Realman Dual Arm Control & Dataset Collection
 
-Control and record data from two Realman robotic arms with easy-to-use CLI tools.
+Control two Realman robotic arms and record datasets in LeRobot v3 format for robot learning.
 
 ## ⚠️ macOS Users
 
-The Realman library **does not support macOS natively**. 
+The Realman library **does not support macOS natively**. Use Docker:
 
-- **Quick Start**: See [QUICKSTART_MACOS.md](QUICKSTART_MACOS.md) to get running in 5 minutes with Docker
-- **Detailed Setup**: See [MACOS_SETUP.md](MACOS_SETUP.md) for all options and troubleshooting
-
-## Features Overview
-
-### 1. Arm Control (`arm_cli.py`)
-- Connect to dual arms
-- Read current joint states
-- Set new joint positions
-- Get arm information
-
-### 2. Data Recording (`record_arm_data.py`)
-- Record joint states at specified FPS (10-100 Hz)
-- Capture end effector pose (position + orientation)
-- Log gripper state
-- Press Enter to stop and save
-- See [RECORDING_GUIDE.md](RECORDING_GUIDE.md) for details
-
-### 3. Data Analysis (`visualize_recording.py`)
-- View recording summaries
-- Inspect specific frames
-- Export to CSV for further analysis
+```bash
+# Install Docker Desktop first, then:
+docker-compose build
+./run_docker.sh python -m src.dataset_collection.record_dataset --dataset-name test --task "Test" --num-episodes 1
+```
 
 ## Installation
 
-1. Install the Realman Python SDK:
-```bash
-pip install Robotic_Arm
-```
-
-Or install from requirements:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+## Quick Start
 
-### Basic Commands
+### Record LeRobot v3 Dataset
 
-**Read joint states from both arms:**
 ```bash
-python arm_cli.py --read
+# Record a dataset with 5 episodes
+python -m src.dataset_collection.record_dataset \
+  --dataset-name my_dataset \
+  --task "Pick and place red cube" \
+  --num-episodes 5
+
+# On macOS (with Docker)
+./run_docker.sh python -m src.dataset_collection.record_dataset \
+  --dataset-name my_dataset \
+  --task "Pick and place" \
+  --num-episodes 5
 ```
 
-**Read joint states from a specific arm:**
+**Usage:**
+1. Run the command above
+2. Wait for arms to connect
+3. For each episode: perform the task, then press Enter
+4. Dataset saved to `lerobot_data/my_dataset/`
+
+### Test RealSense Camera
+
 ```bash
-python arm_cli.py --read --arm 1
-python arm_cli.py --read --arm 2
+# List available cameras
+python test_realsense.py --list
+
+# Test camera (30 frames)
+python test_realsense.py
+
+# Save sample images
+python test_realsense.py --save-images
 ```
 
-**Set joint states for arm 1 (angles in radians):**
-```bash
-python arm_cli.py --set 0.0 0.5 -0.5 0.0 1.57 0.0 0.0 --arm 1
-```
+## Dataset Format
 
-**Set joint states for arm 2 (angles in degrees):**
-```bash
-python arm_cli.py --set 0 30 -30 0 90 0 0 --arm 2 --degrees
-```
-
-**Set joint states with custom speed:**
-```bash
-python arm_cli.py --set 0.0 0.5 -0.5 0.0 1.57 0.0 0.0 --arm 1 --speed 30
-```
-
-**Get arm information:**
-```bash
-python arm_cli.py --info --arm 1
-```
-
-### Connection Configuration
-
-**Connect with custom IP addresses:**
-```bash
-python arm_cli.py --arm1-ip 169.254.128.20 --arm2-ip 169.254.128.21 --read
-```
-
-**Connect with custom ports:**
-```bash
-python arm_cli.py --arm1-port 8080 --arm2-port 8081 --read
-```
-
-### Command Line Options
+Datasets are saved in LeRobot v3 format:
 
 ```
-Connection Options:
-  --arm1-ip IP          IP address of arm 1 (default: 169.254.128.18)
-  --arm1-port PORT      Port of arm 1 (default: 8080)
-  --arm2-ip IP          IP address of arm 2 (default: 169.254.128.19)
-  --arm2-port PORT      Port of arm 2 (default: 8080)
-
-Commands:
-  --read                Read joint states from arm(s)
-  --set J1 J2 J3 J4 J5 J6 J7
-                        Set joint states (7 values required)
-  --info                Get arm software information
-  
-Control Options:
-  --arm {1,2}           Specify which arm (required for --set)
-  --degrees             Interpret --set angles as degrees (default: radians)
-  --speed SPEED         Movement speed for --set (default: 20)
+lerobot_data/my_dataset/
+├── meta/
+│   ├── info.json          # Dataset metadata
+│   └── episodes.jsonl     # Episode metadata
+├── data/
+│   └── chunk-000/
+│       └── episode_*.parquet  # Episode data (Parquet format)
+└── videos/                # Reserved for camera support
 ```
+
+**Data captured per frame:**
+- Joint positions (7 DOF × 2 arms)
+- End effector pose (position + orientation, both arms)
+- Gripper states (both arms)
+- Timestamps
+
+## Configuration
+
+Default robot IPs (configurable):
+- **Left Arm**: 169.254.128.18:8080
+- **Right Arm**: 169.254.128.19:8080
 
 ## Examples
 
-### Example 1: Check both arms are connected and read their states
+### Record Dataset
+
 ```bash
-python arm_cli.py --read
+# Basic recording
+python -m src.dataset_collection.record_dataset \
+  --dataset-name pick_place_v1 \
+  --task "Pick cube and place in box" \
+  --num-episodes 50
+
+# High-speed (60 FPS)
+python -m src.dataset_collection.record_dataset \
+  --dataset-name fast_demo \
+  --task "Fast movements" \
+  --fps 60 \
+  --num-episodes 20
 ```
 
-Output:
-```
-Connecting to Arm 1 at 169.254.128.18:8080...
-✓ Connected to Arm 1 (ID: 1)
-Connecting to Arm 2 at 169.254.128.19:8080...
-✓ Connected to Arm 2 (ID: 2)
+### Load Dataset
 
-=== Arm 1 Joint States ===
-  Joint 1: 0.0000 rad (0.00°)
-  Joint 2: 0.5236 rad (30.00°)
-  Joint 3: -0.5236 rad (-30.00°)
-  Joint 4: 0.0000 rad (0.00°)
-  Joint 5: 1.5708 rad (90.00°)
-  Joint 6: 0.0000 rad (0.00°)
-  Joint 7: 0.0000 rad (0.00°)
+```python
+import pandas as pd
 
-=== Arm 2 Joint States ===
-  Joint 1: 0.0000 rad (0.00°)
-  ...
+# Load episode
+df = pd.read_parquet("lerobot_data/my_dataset/data/chunk-000/episode_000000.parquet")
+
+# View data
+print(df.columns)
+print(df[['observation.state.left_arm', 'observation.state.right_arm']].head())
 ```
 
-### Example 2: Move arm 1 to home position
-```bash
-python arm_cli.py --set 0 0 0 0 0 0 0 --arm 1 --degrees
+### Use Programmatically
+
+```python
+from src.dataset_collection.lerobot_recorder import LeRobotRecorder
+
+recorder = LeRobotRecorder(dataset_name="my_data", fps=30)
+recorder.connect()
+recorder.start_episode(task="Pick and place")
+recorder.start_recording()
+# ... perform task ...
+recorder.stop_recording()
+recorder.end_episode()
+recorder.save_dataset_info()
+recorder.disconnect()
 ```
 
-### Example 3: Move arm 2 to a specific position
-```bash
-python arm_cli.py --set 0.0 0.785 -0.785 0.0 1.57 0.0 0.0 --arm 2 --speed 15
+## Project Structure
+
+```
+src/
+├── arm_control/
+│   └── controller.py          # DualArmController class
+└── dataset_collection/
+    ├── episode.py             # Episode & Frame classes
+    ├── lerobot_recorder.py    # Main recorder
+    └── record_dataset.py      # CLI interface
 ```
 
-### Example 4: Get detailed information about both arms
-```bash
-python arm_cli.py --info
-```
+## Troubleshooting
 
-### Example 5: Record arm data at 30 FPS
-```bash
-# Using Docker on macOS
-./run_docker.sh python record_arm_data.py --arm1-ip 169.254.128.18 --fps 30
+**"Failed to connect to arms"**
+- Check IP addresses (default: 169.254.128.18/19)
+- Verify arms are powered on
+- Test network: `ping 169.254.128.18`
 
-# Press Enter to stop recording
-# Output: arm_recording_YYYYMMDD_HHMMSS.json
-```
+**"No RealSense devices found"**
+- Check USB connection
+- Try different USB port (USB 3.0 recommended)
+- Install: `pip install pyrealsense2`
 
-### Example 6: Analyze recorded data
-```bash
-# View summary
-python visualize_recording.py arm_recording_20251101_123045.json
+**macOS issues**
+- Make sure Docker Desktop is running
+- Rebuild: `docker-compose build`
 
-# View specific frames
-python visualize_recording.py recording.json --frame 0 --frame -1
+## Requirements
 
-# Export to CSV
-python visualize_recording.py recording.json --export data.csv
-```
+- Python 3.9+
+- Realman Robotic_Arm SDK
+- pandas, pyarrow, numpy (for LeRobot format)
+- opencv-python, pyrealsense2 (for camera support)
 
-## API Reference
+## Documentation
 
-The CLI wraps the Realman Python SDK. For more details, see:
-- [Realman Python API Documentation](https://develop.realman-robotics.com/en/robot4th/apipython/getStarted/)
-
-## Notes
-
-- Joint angles can be specified in either radians (default) or degrees (with `--degrees` flag)
-- The `--arm` parameter is required when using `--set` to specify which arm to control
-- When using `--read` without `--arm`, both arms' states will be displayed
-- Default IP addresses are 169.254.128.18 (arm 1) and 169.254.128.19 (arm 2)
-- Make sure both arms are powered on and connected to the network before running commands
-
+- [Realman Python API](https://develop.realman-robotics.com/en/robot4th/apipython/getStarted/)
+- [LeRobot Documentation](https://huggingface.co/docs/lerobot)

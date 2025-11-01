@@ -1,3 +1,12 @@
 # Realman Robotics Python SDK
 Robotic_Arm>=1.0.0
 
+# Data processing for LeRobot v3 format
+pandas>=2.0.0
+pyarrow>=12.0.0
+numpy>=1.24.0
+
+# Computer vision and camera support
+opencv-python>=4.8.0
+pyrealsense2>=2.54.0
+
