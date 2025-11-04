@@ -8,5 +8,3 @@ numpy>=1.24.0
 
 # Computer vision and camera support
 opencv-python>=4.8.0
-pyrealsense2>=2.54.0
-

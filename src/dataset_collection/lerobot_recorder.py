@@ -9,8 +9,9 @@ import time
 import threading
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
 import numpy as np
+import cv2
 
 from Robotic_Arm.rm_robot_interface import *
 from .episode import Episode, Frame
@@ -42,7 +43,8 @@ class LeRobotRecorder:
                  arm1_ip: str = "169.254.128.18",
                  arm1_port: int = 8080,
                  arm2_ip: str = "169.254.128.19",
-                 arm2_port: int = 8080):
+                 arm2_port: int = 8080,
+                 cameras: Optional[List[Union[str, int]]] = None):
         """
         Initialize the LeRobot recorder.
         
@@ -55,6 +57,7 @@ class LeRobotRecorder:
             arm1_port: Port of left arm
             arm2_ip: IP address of right arm
             arm2_port: Port of right arm
+            cameras: List of camera sources (e.g., ["/dev/video0", "/dev/video2"] or [0, 1])
         """
         self.dataset_name = dataset_name
         self.dataset_path = Path(dataset_path) / dataset_name
@@ -68,10 +71,17 @@ class LeRobotRecorder:
         self.arm2_ip = arm2_ip
         self.arm2_port = arm2_port
         
-        # Robot interface
-        self.robot = None
+        # Robot interface - use separate instances for parallel reads
+        self.robot = None  # Kept for compatibility
+        self.robot_left = None  # Separate robot instance for left arm
+        self.robot_right = None  # Separate robot instance for right arm
         self.arm1 = None
         self.arm2 = None
+        
+        # Camera support
+        self.cameras = cameras or []
+        self.cv2_caps = {}  # Camera captures: {camera_name: cv2.VideoCapture}
+        self.camera_names = {}  # Map camera index/source to readable name
         
         # Recording state
         self.recording = False
@@ -100,12 +110,13 @@ class LeRobotRecorder:
     
     def connect(self) -> bool:
         """Connect to the robotic arms."""
-        print("Initializing robot interface...")
-        self.robot = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)
+        print("Initializing robot interfaces...")
         
+        # Create separate robot instances for true parallelism
         if self.arm1_ip:
             print(f"Connecting to Left Arm at {self.arm1_ip}:{self.arm1_port}...")
-            self.arm1 = self.robot.rm_create_robot_arm(self.arm1_ip, self.arm1_port)
+            self.robot_left = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)
+            self.arm1 = self.robot_left.rm_create_robot_arm(self.arm1_ip, self.arm1_port)
             if self.arm1 and self.arm1.id != -1:
                 print(f"✓ Connected to Left Arm (ID: {self.arm1.id})")
             else:
@@ -114,18 +125,103 @@ class LeRobotRecorder:
         
         if self.arm2_ip:
             print(f"Connecting to Right Arm at {self.arm2_ip}:{self.arm2_port}...")
-            self.arm2 = self.robot.rm_create_robot_arm(self.arm2_ip, self.arm2_port)
+            self.robot_right = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)
+            self.arm2 = self.robot_right.rm_create_robot_arm(self.arm2_ip, self.arm2_port)
             if self.arm2 and self.arm2.id != -1:
                 print(f"✓ Connected to Right Arm (ID: {self.arm2.id})")
             else:
                 print("✗ Failed to connect to Right Arm")
                 return False
         
+        # Keep self.robot for backward compatibility (use robot_left if available)
+        self.robot = self.robot_left if self.robot_left else self.robot_right
+        
+        # Connect cameras
+        if self.cameras:
+            if not self.connect_cameras():
+                print("⚠ Warning: Some cameras failed to connect, continuing without them")
+        
         return True
+    
+    def connect_cameras(self) -> bool:
+        """Connect to all configured cameras."""
+        if not self.cameras:
+            return True
+        
+        print(f"\nConnecting to {len(self.cameras)} camera(s)...")
+        all_connected = True
+        
+        for idx, camera_source in enumerate(self.cameras):
+            # Generate camera name
+            if isinstance(camera_source, str):
+                camera_name = f"camera_{Path(camera_source).name}"  # e.g., "camera_video0"
+                camera_display = camera_source
+            else:
+                camera_name = f"camera_{camera_source}"  # e.g., "camera_0"
+                camera_display = str(camera_source)
+            
+            self.camera_names[camera_source] = camera_name
+            
+            # Try to open camera
+            try:
+                cap = cv2.VideoCapture(camera_source)
+                if not cap.isOpened():
+                    print(f"  ✗ Failed to open camera: {camera_display}")
+                    all_connected = False
+                    continue
+                
+                # Set resolution and FPS if possible
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                cap.set(cv2.CAP_PROP_FPS, self.fps)
+                
+                # Read one frame to verify
+                ret, frame = cap.read()
+                if not ret:
+                    print(f"  ✗ Camera {camera_display} opened but cannot read frames")
+                    cap.release()
+                    all_connected = False
+                    continue
+                
+                self.cv2_caps[camera_name] = cap
+                width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                fps_actual = cap.get(cv2.CAP_PROP_FPS)
+                print(f"  ✓ Connected to {camera_name}: {width}x{height} @ {fps_actual:.1f} FPS")
+            
+            except Exception as e:
+                print(f"  ✗ Error connecting to camera {camera_display}: {e}")
+                all_connected = False
+        
+        return all_connected
+    
+    def read_camera_frames(self) -> Dict[str, np.ndarray]:
+        """
+        Read frames from all connected cameras.
+        
+        Returns:
+            Dictionary mapping camera names to frame arrays (BGR format)
+        """
+        frames = {}
+        
+        for camera_name, cap in self.cv2_caps.items():
+            try:
+                ret, frame = cap.read()
+                if ret and frame is not None:
+                    frames[camera_name] = frame
+                else:
+                    # Frame read failed, store None to indicate error
+                    frames[camera_name] = None
+            except Exception as e:
+                print(f"Warning: Error reading from {camera_name}: {e}")
+                frames[camera_name] = None
+        
+        return frames
     
     def read_arm_observation(self, arm_name: str) -> Dict[str, Any]:
         """
         Read observation data from an arm.
+        Uses dedicated robot instance for each arm for parallel execution.
         
         Args:
             arm_name: "left" or "right"
@@ -139,8 +235,16 @@ class LeRobotRecorder:
         }
         
         try:
+            # Select the correct robot instance for this arm
+            if arm_name == "left" and self.robot_left:
+                robot = self.robot_left
+            elif arm_name == "right" and self.robot_right:
+                robot = self.robot_right
+            else:
+                robot = self.robot
+            
             # Get current arm state
-            result = self.robot.rm_get_current_arm_state()
+            result = robot.rm_get_current_arm_state()
             if result[0] == 0:
                 arm_state = result[1]
                 
@@ -162,7 +266,7 @@ class LeRobotRecorder:
                     observation["orientation"] = [0.0, 0.0, 0.0]
             
             # Get gripper state
-            gripper_result = self.robot.rm_get_gripper_state()
+            gripper_result = robot.rm_get_gripper_state()
             if gripper_result[0] == 0:
                 gripper_data = gripper_result[1]
                 observation["gripper_position"] = gripper_data.get("position", 0.0)
@@ -173,6 +277,45 @@ class LeRobotRecorder:
             observation["error"] = str(e)
         
         return observation
+    
+    def read_arm_observations_parallel(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Read observations from both arms in parallel using threading.
+        
+        Returns:
+            Dictionary with "left" and "right" arm observations
+        """
+        observations = {}
+        errors = {}
+        
+        def read_arm(arm_name):
+            """Read arm data and store in shared dict."""
+            try:
+                obs = self.read_arm_observation(arm_name)
+                observations[arm_name] = obs
+            except Exception as e:
+                errors[arm_name] = str(e)
+        
+        # Create threads for each arm
+        threads = []
+        if self.arm1:
+            threads.append(threading.Thread(target=read_arm, args=("left",)))
+        if self.arm2:
+            threads.append(threading.Thread(target=read_arm, args=("right",)))
+        
+        # Start all threads
+        for thread in threads:
+            thread.start()
+        
+        # Wait for all to complete
+        for thread in threads:
+            thread.join()
+        
+        # Report any errors
+        if errors:
+            print(f"Warning: Errors reading arms: {errors}")
+        
+        return observations
     
     def start_episode(self, task: str, task_index: int = 0) -> Episode:
         """
@@ -203,26 +346,41 @@ class LeRobotRecorder:
         if not self.current_episode:
             raise RuntimeError("No active episode. Call start_episode() first.")
         
-        # Read observations from both arms
+        # Read observations from both arms in parallel
         observation = {}
         action = {}
         state = {}
         
-        if self.arm1:
-            left_obs = self.read_arm_observation("left")
+        # Use parallel reading when both arms are present
+        if self.arm1 and self.arm2:
+            arm_observations = self.read_arm_observations_parallel()
+            left_obs = arm_observations.get("left", {})
+            right_obs = arm_observations.get("right", {})
+        else:
+            # Single arm or fallback to sequential
+            arm_observations = {}
+            if self.arm1:
+                left_obs = self.read_arm_observation("left")
+            else:
+                left_obs = {}
+            if self.arm2:
+                right_obs = self.read_arm_observation("right")
+            else:
+                right_obs = {}
+        
+        # Extract data from observations
+        if "qpos" in left_obs:
             observation["observation.state.left_arm"] = left_obs.get("qpos", [])
             observation["observation.state.left_eef_pos"] = left_obs.get("position", [])
             observation["observation.state.left_eef_euler"] = left_obs.get("orientation", [])
             observation["observation.state.left_gripper"] = left_obs.get("gripper_position", 0.0)
             
-            # For now, action = current state (will be replaced with actual commands in teleoperation)
             action["action.left_arm"] = left_obs.get("qpos", [])
             action["action.left_gripper"] = left_obs.get("gripper_position", 0.0)
             
             state["state.left_arm"] = left_obs.get("qpos", [])
         
-        if self.arm2:
-            right_obs = self.read_arm_observation("right")
+        if "qpos" in right_obs:
             observation["observation.state.right_arm"] = right_obs.get("qpos", [])
             observation["observation.state.right_eef_pos"] = right_obs.get("position", [])
             observation["observation.state.right_eef_euler"] = right_obs.get("orientation", [])
@@ -233,11 +391,22 @@ class LeRobotRecorder:
             
             state["state.right_arm"] = right_obs.get("qpos", [])
         
+        # Read camera frames
+        camera_frames = self.read_camera_frames()
+        image_keys = []
+        for camera_name, frame in camera_frames.items():
+            if frame is not None:
+                # Add image to observation with LeRobot naming convention
+                image_key = f"observation.{camera_name}"
+                observation[image_key] = frame
+                image_keys.append(image_key)
+        
         # Add frame to episode
         self.current_episode.add_frame(
             observation=observation,
             action=action,
-            state=state
+            state=state,
+            image_keys=image_keys
         )
     
     def recording_loop(self):
@@ -323,9 +492,13 @@ class LeRobotRecorder:
         }
         
         # Collect all unique keys from observations, actions, states
+        # Exclude image keys (images are saved separately, not in Parquet)
         all_keys = set()
         for frame in episode.frames:
-            all_keys.update(frame.observation.keys())
+            for key in frame.observation.keys():
+                # Skip image keys (numpy arrays)
+                if not isinstance(frame.observation[key], np.ndarray):
+                    all_keys.add(key)
             all_keys.update(frame.action.keys())
             all_keys.update(frame.state.keys())
         
@@ -339,7 +512,7 @@ class LeRobotRecorder:
             data_dict["frame_index"].append(frame.index)
             data_dict["timestamp"].append(frame.timestamp)
             
-            # Add all data
+            # Add all data (excluding images)
             for key in all_keys:
                 value = None
                 if key in frame.observation:
@@ -396,8 +569,22 @@ class LeRobotRecorder:
         print(f"✓ Saved dataset info: {info_file}")
     
     def disconnect(self):
-        """Disconnect from all arms."""
+        """Disconnect from all arms and cameras."""
         print("\nDisconnecting from robotic arms...")
-        if self.robot:
-            self.robot.rm_delete_robot_arm()
+        if self.robot_left:
+            self.robot_left.rm_delete_robot_arm()
+        if self.robot_right:
+            self.robot_right.rm_delete_robot_arm()
+        
+        # Close all cameras
+        if self.cv2_caps:
+            print("Closing cameras...")
+            for camera_name, cap in self.cv2_caps.items():
+                try:
+                    cap.release()
+                    print(f"  ✓ Closed {camera_name}")
+                except Exception as e:
+                    print(f"  ✗ Error closing {camera_name}: {e}")
+            self.cv2_caps.clear()
+            self.camera_names.clear()
 

@@ -42,17 +42,22 @@ python -m src.dataset_collection.record_dataset \
 3. For each episode: perform the task, then press Enter
 4. Dataset saved to `lerobot_data/my_dataset/`
 
-### Test RealSense Camera
+### Record with Cameras
 
 ```bash
-# List available cameras
-python test_realsense.py --list
+# Record with one camera
+python -m src.dataset_collection.record_dataset \
+  --dataset-name my_dataset \
+  --task "Pick and place" \
+  --num-episodes 5 \
+  --camera /dev/video0
 
-# Test camera (30 frames)
-python test_realsense.py
-
-# Save sample images
-python test_realsense.py --save-images
+# Record with multiple cameras
+python -m src.dataset_collection.record_dataset \
+  --dataset-name my_dataset \
+  --task "Pick and place" \
+  --num-episodes 5 \
+  --camera /dev/video0 --camera /dev/video2
 ```
 
 ## Dataset Format
@@ -71,9 +76,10 @@ lerobot_data/my_dataset/
 ```
 
 **Data captured per frame:**
-- Joint positions (7 DOF × 2 arms)
+- Joint positions (7 DOF × 2 arms, parallel reads for 2x faster)
 - End effector pose (position + orientation, both arms)
 - Gripper states (both arms)
+- Camera images (optional, multiple cameras supported)
 - Timestamps
 
 ## Configuration
@@ -93,11 +99,18 @@ python -m src.dataset_collection.record_dataset \
   --task "Pick cube and place in box" \
   --num-episodes 50
 
-# High-speed (60 FPS)
+# With cameras
+python -m src.dataset_collection.record_dataset \
+  --dataset-name pick_place_v1 \
+  --task "Pick and place" \
+  --num-episodes 50 \
+  --camera /dev/video0 --camera /dev/video2
+
+# High-speed (up to 45-50 FPS with dual arms)
 python -m src.dataset_collection.record_dataset \
   --dataset-name fast_demo \
   --task "Fast movements" \
-  --fps 60 \
+  --fps 50 \
   --num-episodes 20
 ```
 
@@ -149,10 +162,10 @@ src/
 - Verify arms are powered on
 - Test network: `ping 169.254.128.18`
 
-**"No RealSense devices found"**
-- Check USB connection
+**Camera issues**
+- Check camera: `ls /dev/video*` (Linux) or `ffmpeg -list_devices true -f dshow -i dummy` (Windows)
 - Try different USB port (USB 3.0 recommended)
-- Install: `pip install pyrealsense2`
+- Use numeric index instead: `--camera 0`
 
 **macOS issues**
 - Make sure Docker Desktop is running
@@ -163,7 +176,7 @@ src/
 - Python 3.9+
 - Realman Robotic_Arm SDK
 - pandas, pyarrow, numpy (for LeRobot format)
-- opencv-python, pyrealsense2 (for camera support)
+- opencv-python (for camera support)
 
 ## Documentation
 

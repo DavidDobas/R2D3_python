@@ -25,6 +25,20 @@ Examples:
     --task "Pick and place" \\
     --num-episodes 5
   
+  # Record with cameras
+  python -m src.dataset_collection.record_dataset \\
+    --dataset-name my_dataset \\
+    --task "Pick and place" \\
+    --num-episodes 5 \\
+    --camera /dev/video0 --camera /dev/video2
+  
+  # Record with multiple cameras (mix of device paths and indices)
+  python -m src.dataset_collection.record_dataset \\
+    --dataset-name my_dataset \\
+    --task "Pick and place" \\
+    --num-episodes 5 \\
+    --camera /dev/video0 --camera 1
+  
   # Record with custom IPs and FPS
   python -m src.dataset_collection.record_dataset \\
     --dataset-name high_speed_demo \\
@@ -32,12 +46,6 @@ Examples:
     --fps 60 \\
     --arm1-ip 169.254.128.18 \\
     --arm2-ip 169.254.128.19
-  
-  # Record single episode
-  python -m src.dataset_collection.record_dataset \\
-    --dataset-name test \\
-    --task "Test task" \\
-    --num-episodes 1
 
 Usage:
   1. Start the script
@@ -71,7 +79,22 @@ Usage:
     parser.add_argument("--arm2-port", type=int, default=8080,
                         help="Right arm port (default: 8080)")
     
+    # Camera configuration
+    parser.add_argument("--camera", type=str, action="append",
+                        help="Camera source (can be used multiple times). "
+                             "Examples: /dev/video0, /dev/video2, or numeric index 0, 1, etc.")
+    
     args = parser.parse_args()
+    
+    # Parse camera sources (convert numeric strings to int, keep paths as str)
+    cameras = []
+    if args.camera:
+        for cam_source in args.camera:
+            # Try to convert to int if it's numeric, otherwise keep as string
+            try:
+                cameras.append(int(cam_source))
+            except ValueError:
+                cameras.append(cam_source)
     
     # Initialize recorder
     print(f"\n{'='*70}")
@@ -81,6 +104,8 @@ Usage:
     print(f"Task: {args.task}")
     print(f"Episodes: {args.num_episodes}")
     print(f"FPS: {args.fps}")
+    if cameras:
+        print(f"Cameras: {cameras}")
     print(f"{'='*70}\n")
     
     recorder = LeRobotRecorder(
@@ -91,7 +116,8 @@ Usage:
         arm1_ip=args.arm1_ip,
         arm1_port=args.arm1_port,
         arm2_ip=args.arm2_ip,
-        arm2_port=args.arm2_port
+        arm2_port=args.arm2_port,
+        cameras=cameras
     )
     
     try:
